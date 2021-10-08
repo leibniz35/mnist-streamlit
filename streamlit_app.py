@@ -6,27 +6,39 @@ from pathlib import Path
 import streamlit as st
 
 url = ("http://dl.dropboxusercontent.com/s/8enqf9v1s1fq9ty/mnist.pkl?raw=1")
-filename = "export.pkl"
+filename = "mnist.pkl"
 urlretrieve(url,filename)
 
-uploaded_file = st.file_uploader("Upload Files",type=['png','jpeg', 'jpg'])
 
 
 
-if uploaded_file is None:
-    # Default image.
-    url = 'https://github.com/matthewbrems/streamlit-bccd/blob/master/BCCD_sample_images/BloodImage_00038_jpg.rf.6551ec67098bc650dd650def4e8a8e98.jpg?raw=true'
-    image = Image.open(requests.get(url, stream=True).raw)
+class Predict:
+    def __init__(self, filename):
+        self.learn_inference = load_learner(Path()/filename)
+        self.img = self.get_image_from_upload()
+        if self.img is not None:
+            self.display_output()
+            self.get_prediction()
     
-    
-    
-else:
-    image = Image.open(uploaded_file)
-    img_array = PILImage.create((uploaded_file))
-    self.learn_inference = load_learner(Path()/filename)
-    pred, pred_idx, probs = self.learn_inference.predict(self.img)
-    st.write(f'Prediction: {pred}; Probability: {probs[pred_idx]:.04f}')
-    st.image(self.img.to_thumb(500,500), caption='Uploaded Image')
-  
+    @staticmethod
+    def get_image_from_upload():
+        uploaded_file = st.file_uploader("Upload Files",type=['png','jpeg', 'jpg'])
+        if uploaded_file is not None:
+            return PILImage.create((uploaded_file))
+        return None
 
-    
+    def display_output(self):
+        st.image(self.img.to_thumb(500,500), caption='Uploaded Image')
+
+    def get_prediction(self):
+
+        if st.button('Classify'):
+            pred, pred_idx, probs = self.learn_inference.predict(self.img)
+            st.write(f'Prediction: {pred}; Probability: {probs[pred_idx]:.04f}')
+        else: 
+            st.write(f'Click the button to classify') 
+if __name__=='__main__':
+
+    file_name='mnist.pkl'
+
+    predictor = Predict(file_name)
